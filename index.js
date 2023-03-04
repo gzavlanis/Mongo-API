@@ -1,17 +1,24 @@
+require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
+const mongoString = process.env.DATABASE_URL;
 const app = express();
-const connection = require('./database');
-
-connection.connection((err, client) => {
-    if (err) console.log(err);
-});
+const routes = require('./routes/routes');
+const events = require('./routes/events');
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use('/api/users', require('./routes/api/users'));
-app.use('/api/events', require('./routes/api/events'));
-app.set('view engine', 'ejs');
-app.get('/', (req, res) => {
-    res.render('index');
+app.use('/api', routes);
+app.use('/api', events);
+
+mongoose.set('strictQuery', true);
+mongoose.connect(mongoString, {dbName: 'myMongo'});
+const database = mongoose.connection;
+database.on('error', (error) => {
+    console.log(error)
+});
+database.once('connected', () => {
+    console.log('Database Connected')
 });
 
-app.listen(3000, () => console.log('App started'));
+app.listen(3000, () => {
+    console.log('Server started')
+});
